@@ -1,0 +1,137 @@
+---
+title: "Team Project"
+output: html_document
+date: "2024-09-24"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Diabetes
+
+```{r}
+df_diabetes = read.csv("diabetes.csv", check.names = FALSE)
+summary(df_diabetes)
+```
+```{r}
+df_diabetes <- df_diabetes[df_diabetes$Insulin != 0, ]
+df = df_diabetes[,-9]
+
+
+df = scale(df)
+```
+
+
+
+```{r}
+library("factoextra")
+# Plot faithful data set
+fviz_pca_ind(prcomp(df), title = "PCA - Diabetes", 
+             geom = "point", ggtheme = theme_classic())
+```
+
+```{r}
+table(df_diabetes$Outcome)
+```
+
+
+```{r}
+library(hopkins)
+hopkins(df, m = nrow(df)-1)
+
+```
+
+```{r}
+#library(factoextra)
+# Compute Hopkins statistic for iris dataset
+#set.seed(123)
+#res <- get_clust_tendency(df, n = nrow(df)-1, graph = FALSE)
+#res$hopkins_stat
+```
+
+```{r}
+fviz_dist(dist(df), show_labels = FALSE)+
+  labs(title = "Diabetes data")
+```
+
+
+```{r}
+km.res1 <- kmeans(df, 2, nstart=25, iter.max = 10)
+#RECHECK THE RESULT. NOT GOOD
+km.res1
+
+```
+```{r}
+dd2 <- cbind(df_diabetes, cluster = km.res1$cluster)
+head(dd2, n = 10)
+```
+
+
+```{r}
+fviz_cluster(list(data = df, cluster = km.res1$cluster),
+            ellipse.type = "norm", geom = "point", stand = FALSE,
+           palette = "jco", ggtheme = theme_classic())
+
+```
+
+
+```{r}
+fviz_nbclust(df, kmeans, method = "wss") +
+    geom_vline(xintercept = 3, linetype = 2)
+```
+
+
+
+##PAM 
+
+```{r}
+library(cluster)
+library(factoextra)
+fviz_nbclust(df, pam, method = "silhouette")+
+  theme_classic()
+```
+
+```{r}
+pam.res <- pam(df, 2)
+print(pam.res)
+```
+```{r}
+dd <- cbind(df_diabetes, cluster = pam.res$cluster)
+head(dd, n = 10)
+```
+```{r}
+pam.res$medoids
+```
+
+```{r}
+fviz_cluster(pam.res, 
+             palette = c("#00AFBB", "#FC4E07"), # color palette
+             ellipse.type = "t", # Concentration ellipse
+             repel = FALSE,
+             labelsize = 0,
+             # Avoid label overplotting (slow)
+             ggtheme = theme_classic()
+             )
+```
+
+```{r}
+# Create a contingency table for Outcome and cluster
+contingency_table <- table(dd$Outcome, dd$cluster)
+
+# Print the contingency table
+print(contingency_table)
+
+a = 21/(158+106+109+21)
+a
+```
+```{r}
+# Create a contingency table for Outcome and cluster
+contingency_table2 <- table(dd2$Outcome, dd2$cluster)
+
+# Print the contingency table
+print(contingency_table2)
+
+
+```
+
