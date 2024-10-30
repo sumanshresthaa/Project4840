@@ -11,13 +11,12 @@ knitr::opts_chunk$set(echo = TRUE)
 # Diabetes
 
 ```{r}
-df_diabetes = read.csv("diabetes.csv", check.names = FALSE)
-summary(df_diabetes)
+df_cancer = read.csv("Cancer_Data.csv")
+summary(df_cancer)
 ```
-```{r}
-df_diabetes <- df_diabetes[df_diabetes$Insulin != 0, ]
-df = df_diabetes[,-9]
 
+```{r}
+df = df_cancer[,-c(1:2, 33)]
 
 df = scale(df)
 ```
@@ -32,7 +31,7 @@ fviz_pca_ind(prcomp(df), title = "PCA - Diabetes",
 ```
 
 ```{r}
-table(df_diabetes$Outcome)
+table(df_cancer$Outcome)
 ```
 
 
@@ -43,11 +42,11 @@ hopkins(df, m = nrow(df)-1)
 ```
 
 ```{r}
-#library(factoextra)
-# Compute Hopkins statistic for iris dataset
-#set.seed(123)
-#res <- get_clust_tendency(df, n = nrow(df)-1, graph = FALSE)
-#res$hopkins_stat
+library(factoextra)
+#Compute Hopkins statistic for iris dataset
+set.seed(123)
+res <- get_clust_tendency(df, n = nrow(df)-1, graph = FALSE)
+res$hopkins_stat
 ```
 
 ```{r}
@@ -63,7 +62,7 @@ km.res1
 
 ```
 ```{r}
-dd2 <- cbind(df_diabetes, cluster = km.res1$cluster)
+dd2 <- cbind(df_cancer, cluster = km.res1$cluster)
 head(dd2, n = 10)
 ```
 
@@ -97,7 +96,7 @@ pam.res <- pam(df, 2)
 print(pam.res)
 ```
 ```{r}
-dd <- cbind(df_diabetes, cluster = pam.res$cluster)
+dd <- cbind(df_cancer, cluster = pam.res$cluster)
 head(dd, n = 10)
 ```
 ```{r}
@@ -117,21 +116,23 @@ fviz_cluster(pam.res,
 
 ```{r}
 # Create a contingency table for Outcome and cluster
-contingency_table <- table(dd$Outcome, dd$cluster)
+contingency_table <- table(dd$diagnosis, dd$cluster)
 
 # Print the contingency table
 print(contingency_table)
 
-a = 21/(158+106+109+21)
-a
 ```
 ```{r}
 # Create a contingency table for Outcome and cluster
-contingency_table2 <- table(dd2$Outcome, dd2$cluster)
+contingency_table2 <- table(dd2$diagnosis, dd2$cluster)
 
 # Print the contingency table
 print(contingency_table2)
 
+
+```
+
+```{r}
 
 ```
 
