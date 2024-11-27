@@ -1,0 +1,235 @@
+---
+title: "hierarchical"
+output: html_document
+date: "2024-10-30"
+---
+
+## R Markdown
+
+```{r}
+library(cluster)
+library(factoextra)
+library(corrplot)
+library(dendextend)
+library(foreign)
+library(clValid)
+library(fpc)
+library(EMCluster)
+```
+
+```{r}
+thyroid = read.csv("Thyroid_Diff.csv")
+head(thyroid)
+```
+
+```{r}
+str(thyroid)
+```
+
+
+```{r}
+colnames(thyroid)
+```
+
+
+```{r}
+cols_to_factor = c("Gender", "Smoking", "Hx.Smoking", "Hx.Radiothreapy", "Thyroid.Function", "Physical.Examination", "Adenopathy", "Pathology", "Focality", "Risk", "T", "N", "M", "Stage", "Response")
+
+thyroid[cols_to_factor] <- lapply(thyroid[cols_to_factor], as.factor)
+```
+
+```{r}
+summary(thyroid)
+```
+
+```{r}
+thyroid.new = thyroid[-17]
+mydist = daisy(thyroid.new, metric='gower')
+```
+
+```{r}
+result.single = hclust(mydist, method='single')
+dend.single = plot(result.single)
+```
+
+```{r}
+result.complete = hclust(mydist, method='complete')
+dend.complete = plot(result.complete)
+```
+
+```{r}
+result.avg = hclust(mydist, method='average')
+dend.avg = plot(result.avg)
+```
+
+```{r}
+result.ward = hclust(mydist, method='ward.D')
+dend.ward = plot(result.ward)
+```
+
+```{r}
+result.ward2 = hclust(mydist, method='ward.D2')
+dend.ward2 = plot(result.ward2)
+```
+
+```{r}
+cutting.single = cutree(result.single, k=2)
+cutting.single
+```
+
+```{r}
+cutting.complete = cutree(result.complete, k=2)
+cutting.complete
+```
+
+```{r}
+cutting.avg = cutree(result.avg, k=2)
+cutting.avg
+```
+
+```{r}
+cutting.ward = cutree(result.ward, k=2)
+cutting.ward
+```
+
+```{r}
+cutting.ward2 = cutree(result.ward2, k=2)
+cutting.ward2
+```
+
+```{r}
+fviz_dend(result.single, k=2, rect=TRUE)
+```
+
+```{r}
+fviz_dend(result.complete, k=2, rect=TRUE)
+```
+
+```{r}
+fviz_dend(result.avg, k=2, rect=TRUE)
+```
+
+```{r}
+fviz_dend(result.ward, k=2, rect=TRUE)
+```
+
+```{r}
+fviz_dend(result.ward2, k=2, rect=TRUE)
+```
+
+```{r}
+cont.table.single = table(thyroid$Recurred, cutting.single)
+cont.table.single
+```
+
+```{r}
+cont.table.complete = table(thyroid$Recurred, cutting.complete)
+cont.table.complete
+```
+
+```{r}
+cont.table.avg = table(thyroid$Recurred, cutting.avg)
+cont.table.avg
+```
+
+```{r}
+cont.table.ward = table(thyroid$Recurred, cutting.ward)
+cont.table.ward
+```
+
+```{r}
+cont.table.ward2 = table(thyroid$Recurred, cutting.ward2)
+cont.table.ward2
+```
+
+```{r}
+dend.single = as.dendrogram(result.single)
+dend.complete = as.dendrogram(result.complete)
+dend.avg = as.dendrogram(result.avg)
+dend.ward = as.dendrogram(result.ward)
+dend.ward2 = as.dendrogram(result.ward2)
+```
+
+
+```{r}
+dend_list = dendlist("Single"=dend.single, "Complete"=dend.complete, "Average"=dend.avg, "Ward.D"=dend.ward, "Ward.D2"=dend.ward2)
+
+cors = cor.dendlist(dend_list)
+
+round(cors, 2)
+```
+
+```{r}
+corrplot(cors, "pie", "lower")
+```
+
+```{r}
+dend_list2 = dendlist(dend.ward, dend.ward2)
+
+tanglegram(dend.ward, dend.ward2, highlight_distinct_edges = FALSE, common_subtrees_color_lines = FALSE, common_subtrees_color_branches = TRUE, main=paste("entanglement=", round(entanglement(dend_list), 2)))
+```
+
+```{r}
+connectivity(mydist, cutting.single, neighbSize = 2)
+```
+
+```{r}
+connectivity(mydist, cutting.complete, neighbSize = 2)
+```
+
+```{r}
+connectivity(mydist, cutting.avg, neighbSize = 2)
+```
+
+```{r}
+connectivity(mydist, cutting.ward, neighbSize = 2)
+```
+
+```{r}
+connectivity(mydist, cutting.ward2, neighbSize = 2)
+```
+
+```{r}
+cluster.stats(mydist, cutting.single)$dunn
+```
+
+```{r}
+cluster.stats(mydist, cutting.complete)$dunn
+```
+
+```{r}
+cluster.stats(mydist, cutting.avg)$dunn
+```
+
+```{r}
+cluster.stats(mydist, cutting.ward)$dunn
+```
+
+```{r}
+cluster.stats(mydist, cutting.ward2)$dunn
+```
+
+```{r}
+ground.truth = ifelse(thyroid$Recurred=="No", 1, 2)
+```
+
+
+```{r}
+RRand(ground.truth, cutting.single)
+```
+
+```{r}
+RRand(ground.truth, cutting.complete)
+```
+
+```{r}
+RRand(ground.truth, cutting.avg)
+```
+
+```{r}
+RRand(ground.truth, cutting.ward)
+```
+
+```{r}
+RRand(ground.truth, cutting.ward2)
+```
