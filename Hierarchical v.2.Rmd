@@ -1,0 +1,316 @@
+---
+title: "hierarchical"
+output: html_document
+date: "2024-10-30"
+---
+
+## R Markdown
+
+```{r}
+library(cluster)
+library(factoextra)
+library(corrplot)
+library(dendextend)
+library(foreign)
+library(clValid)
+library(fpc)
+library(EMCluster)
+library(igraph)
+```
+
+```{r}
+sleep = read.csv("Sleep_Analysis.csv")
+head(sleep)
+```
+
+```{r}
+str(sleep)
+```
+
+
+```{r}
+colnames(sleep)
+```
+
+
+```{r}
+cols_to_factor = c("Gender", "meals.day", "physical.illness", "screen.time", "bluelight.filter", "sleep.direction", "exercise", "smoke.drink", "beverage")
+
+sleep[cols_to_factor] <- lapply(sleep[cols_to_factor], as.factor)
+```
+
+```{r}
+sleep$sleep_range <- cut(
+  sleep$sleep.time, 
+  breaks = c(0, 4, 6, 8, 9), # Define range limits
+  labels = c("Very Short", "Short", "Average", "Long"), # Labels for ranges
+  right = TRUE # Include the upper limit in the interval
+)
+```
+
+```{r}
+summary(sleep)
+```
+
+```{r}
+new.sleep = sleep[,-c(11:12)]
+mydist = daisy(new.sleep, metric='gower')
+```
+
+```{r}
+fviz_nbclust(x=as.matrix(mydist), FUNcluster = hcut, method = "silhouette")
+```
+
+```{r}
+fviz_nbclust(x=as.matrix(mydist), FUNcluster = hcut, method = "wss")
+```
+
+```{r}
+fviz_nbclust(x=as.matrix(mydist), FUNcluster = hcut, method = "gap")
+```
+
+
+```{r}
+result.single = hclust(mydist, method='single')
+plot(result.single)
+```
+
+```{r}
+result.complete = hclust(mydist, method='complete')
+plot(result.complete)
+```
+
+```{r}
+result.avg = hclust(mydist, method='average')
+plot(result.avg)
+```
+
+```{r}
+result.ward = hclust(mydist, method='ward.D')
+plot(result.ward)
+```
+
+```{r}
+result.ward2 = hclust(mydist, method='ward.D2')
+plot(result.ward2)
+```
+
+```{r}
+k = 4
+```
+
+```{r}
+cutting.single = cutree(result.single, k=k)
+cutting.single
+```
+
+```{r}
+cutting.complete = cutree(result.complete, k=k)
+cutting.complete
+```
+
+```{r}
+cutting.avg = cutree(result.avg, k=k)
+cutting.avg
+```
+
+```{r}
+cutting.ward = cutree(result.ward, k=k)
+cutting.ward
+```
+
+```{r}
+cutting.ward2 = cutree(result.ward2, k=k)
+cutting.ward2
+```
+
+```{r}
+fviz_dend(result.single, k=2, rect=TRUE)
+```
+
+```{r}
+fviz_dend(result.single, k=k, k_colors = "jco", type = "phylogenic", repel=TRUE)
+```
+
+```{r}
+fviz_dend(result.single, cex=0.6, k=k, k_colors = "jco", type = "circular")
+```
+
+```{r}
+fviz_dend(result.complete, k=k, rect=TRUE)
+```
+
+```{r}
+fviz_dend(result.complete, k=k, k_colors = "jco", type = "phylogenic", repel=TRUE)
+```
+
+```{r}
+fviz_dend(result.complete, cex=0.6, k=k, k_colors = "jco", type = "circular")
+```
+
+```{r}
+fviz_dend(result.avg, k=k, rect=TRUE)
+```
+
+```{r}
+fviz_dend(result.avg, cex=0.6, k=k, k_colors = "jco", type = "circular")
+```
+
+```{r}
+fviz_dend(result.avg, k=k, k_colors = "jco", type = "phylogenic", repel=TRUE)
+```
+
+```{r}
+fviz_dend(result.ward, k=k, rect=TRUE)
+```
+
+```{r}
+fviz_dend(result.ward, cex=0.6, k=k, k_colors = "jco", type = "circular")
+```
+
+```{r}
+fviz_dend(result.ward, k=k, k_colors = "jco", type = "phylogenic", repel=TRUE)
+```
+
+```{r}
+fviz_dend(result.ward2, k=k, rect=TRUE)
+```
+
+```{r}
+fviz_dend(result.ward2, cex=0.6, k=k, k_colors = "jco", type = "circular")
+```
+
+```{r}
+fviz_dend(result.ward2, k=k, k_colors = "jco", type = "phylogenic", repel=TRUE)
+```
+
+```{r}
+dend.single = as.dendrogram(result.single)
+dend.complete = as.dendrogram(result.complete)
+dend.avg = as.dendrogram(result.avg)
+dend.ward = as.dendrogram(result.ward)
+dend.ward2 = as.dendrogram(result.ward2)
+```
+
+```{r}
+dend_list = dendlist("Single"=dend.single, "Complete"=dend.complete, "Average"=dend.avg, "Ward.D"=dend.ward, "Ward.D2"=dend.ward2)
+
+cors = cor.dendlist(dend_list)
+
+round(cors, 2)
+```
+
+```{r}
+corrplot(cors, "pie", "lower")
+```
+
+```{r}
+tanglegram(dend.single, dend.complete, highlight_distinct_edges = FALSE, common_subtrees_color_lines = FALSE, common_subtrees_color_branches = TRUE, main=paste("entanglement=", round(entanglement(dendlist(dend.single, dend.complete)), 2)))
+```
+
+```{r}
+tanglegram(dend.single, dend.avg, highlight_distinct_edges = FALSE, common_subtrees_color_lines = FALSE, common_subtrees_color_branches = TRUE, main=paste("entanglement=", round(entanglement(dendlist(dend.single, dend.avg)), 2)))
+```
+
+```{r}
+tanglegram(dend.single, dend.ward, highlight_distinct_edges = FALSE, common_subtrees_color_lines = FALSE, common_subtrees_color_branches = TRUE, main=paste("entanglement=", round(entanglement(dendlist(dend.single, dend.ward)), 2)))
+```
+
+```{r}
+tanglegram(dend.single, dend.ward2, highlight_distinct_edges = FALSE, common_subtrees_color_lines = FALSE, common_subtrees_color_branches = TRUE, main=paste("entanglement=", round(entanglement(dendlist(dend.single, dend.ward2)), 2)))
+```
+
+```{r}
+tanglegram(dend.complete, dend.avg, highlight_distinct_edges = FALSE, common_subtrees_color_lines = FALSE, common_subtrees_color_branches = TRUE, main=paste("entanglement=", round(entanglement(dendlist(dend.complete, dend.avg)), 2)))
+```
+
+```{r}
+tanglegram(dend.complete, dend.ward, highlight_distinct_edges = FALSE, common_subtrees_color_lines = FALSE, common_subtrees_color_branches = TRUE, main=paste("entanglement=", round(entanglement(dendlist(dend.complete, dend.ward)), 2)))
+```
+
+```{r}
+tanglegram(dend.complete, dend.ward2, highlight_distinct_edges = FALSE, common_subtrees_color_lines = FALSE, common_subtrees_color_branches = TRUE, main=paste("entanglement=", round(entanglement(dendlist(dend.complete, dend.ward2)), 2)))
+```
+
+```{r}
+tanglegram(dend.avg, dend.ward, highlight_distinct_edges = FALSE, common_subtrees_color_lines = FALSE, common_subtrees_color_branches = TRUE, main=paste("entanglement=", round(entanglement(dendlist(dend.avg, dend.ward)), 2)))
+```
+
+```{r}
+tanglegram(dend.avg, dend.ward2, highlight_distinct_edges = FALSE, common_subtrees_color_lines = FALSE, common_subtrees_color_branches = TRUE, main=paste("entanglement=", round(entanglement(dendlist(dend.avg, dend.ward2)), 2)))
+```
+
+```{r}
+tanglegram(dend.ward, dend.ward2, highlight_distinct_edges = FALSE, common_subtrees_color_lines = FALSE, common_subtrees_color_branches = TRUE, main=paste("entanglement=", round(entanglement(dendlist(dend.ward, dend.ward2)), 2)))
+```
+
+# Connectivity
+
+```{r}
+con.single = connectivity(mydist, cutting.single, neighbSize = 2)
+con.complete = connectivity(mydist, cutting.complete, neighbSize = 2)
+con.avg = connectivity(mydist, cutting.avg, neighbSize = 2)
+con.ward = connectivity(mydist, cutting.ward, neighbSize = 2)
+con.ward2 = connectivity(mydist, cutting.ward2, neighbSize = 2)
+connectivity.result = data.frame(cbind(con.single, con.complete, con.avg, con.ward, con.ward2))
+colnames(connectivity.result) <- c("Single", "Complete", "Average", "Ward.D", "Ward.D2")
+connectivity.result
+```
+
+# Dunn Index
+
+```{r}
+dunn.single = cluster.stats(mydist, cutting.single)$dunn
+dunn.complete = cluster.stats(mydist, cutting.complete)$dunn
+dunn.avg = cluster.stats(mydist, cutting.avg)$dunn
+dunn.ward = cluster.stats(mydist, cutting.ward)$dunn
+dunn.ward2 = cluster.stats(mydist, cutting.ward2)$dunn
+dunn.result = data.frame(cbind(dunn.single, dunn.complete, dunn.avg, dunn.ward, dunn.ward2))
+colnames(dunn.result) <- c("Single", "Complete", "Average", "Ward.D", "Ward.D2")
+dunn.result
+```
+
+#Silhouette
+
+```{r}
+ss.single = mean(cluster.stats(mydist, cutting.single)$clus.avg.silwidths)
+ss.complete = mean(cluster.stats(mydist, cutting.complete)$clus.avg.silwidths)
+ss.avg = mean(cluster.stats(mydist, cutting.avg)$clus.avg.silwidths)
+ss.ward = mean(cluster.stats(mydist, cutting.ward)$clus.avg.silwidths)
+ss.ward2 = mean(cluster.stats(mydist, cutting.ward2)$clus.avg.silwidths)
+ss.result = data.frame(cbind(ss.single, ss.complete, ss.avg, ss.ward, ss.ward2))
+colnames(ss.result) <- c("Single", "Complete", "Average", "Ward.D", "Ward.D2")
+ss.result
+```
+
+```{r}
+iv = data.frame(rbind(connectivity.result, dunn.result, ss.result))
+rownames(iv) <- c("Connectivity", "Dunn Index", "Silhouette")
+iv
+```
+
+
+```{r}
+sil.single = silhouette(cutting.single, dist=mydist)
+fviz_silhouette(sil.single, palette = "jco", ggtheme = theme_classic())
+```
+
+```{r}
+sil.complete = silhouette(cutting.complete, dist=mydist)
+fviz_silhouette(sil.complete, palette = "jco", ggtheme = theme_classic())
+```
+
+```{r}
+sil.avg = silhouette(cutting.avg, dist=mydist)
+fviz_silhouette(sil.avg, palette = "jco", ggtheme = theme_classic())
+```
+
+```{r}
+sil.ward = silhouette(cutting.ward, dist=mydist)
+fviz_silhouette(sil.ward, palette = "jco", ggtheme = theme_classic())
+```
+
+```{r}
+sil.ward2 = silhouette(cutting.ward2, dist=mydist)
+fviz_silhouette(sil.ward2, palette = "jco", ggtheme = theme_classic())
+```
